@@ -2,7 +2,7 @@
 
 # import pickle
 import numpy as np
-# from flask import Flask, request
+from flask import Flask, request
 # import os
 #import boto3
 # import json
