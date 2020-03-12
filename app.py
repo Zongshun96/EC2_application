@@ -10,11 +10,11 @@ from flask import Flask, request
 #import urllib2
 #import subprocess
 
-# import time
+#import time
 #
 # import mxnet as mx
 # import numpy as np
-# from datetime import datetime
+from datetime import datetime
 #
 # from PIL import Image
 # from collections import namedtuple
@@ -168,15 +168,32 @@ app = Flask(__name__)
 #     # del sym, arg_params, aux_params, mod, labels
 #     return out
 
-
+#a = np.array(range(1,2000000))
 def OneSecMultiplication():
-    a = np.array([1,2,3,4])
-    t=time.time()
+    #a = np.array(range(1,2000000))
+    #global a
+    #t=datetime.now()
     count = 0
-    while time.time()-t <1:
-        a*a
-        count += count
-    return count
+    t1 = datetime.now()
+    #while count == 9999999999999999999999999999999999999:
+    #    a*a
+    #    count += 1
+    a = np.array(range(1,350000))
+    t2 = datetime.now()
+    delta = t2-t1
+    #print(count)
+    out = {
+             "headers": {
+                 "content-type": "application/json",
+                 "Access-Control-Allow-Origin": "*"
+                 },
+             "body": "count",
+             "predicttime": str(delta.total_seconds()),
+             #"loadmodeldelta": str(loadmodeldelta.total_seconds()),
+             #"model": "squeezenet_v1.0",
+             "statusCode": 200
+           }
+    return out
 
 #count = 0
 @app.route('/HealthCheck')
@@ -227,16 +244,8 @@ def get_prediction():
     #time.sleep(10)
     #count = count - 1
     # return ret
-    count = OneSecMultiplication()
-    return {
-            "headers": {
-                "content-type": "application/json",
-                "Access-Control-Allow-Origin": "*"
-                },
-            "body": count,
-            "statusCode": 200
-          }
-
+    ret = OneSecMultiplication()
+    return ret
 
 if __name__ == '__main__':
     # load_model()  # load model at the beginning once only
