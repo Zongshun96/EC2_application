@@ -4,10 +4,13 @@ import pickle
 import numpy as np
 from flask import Flask, request
 import os
-import boto3
+#import boto3
 import json
 import tempfile
-import urllib2
+#import urllib2
+#import subprocess
+
+import time
 
 import mxnet as mx
 import numpy as np
@@ -22,6 +25,12 @@ Batch = namedtuple('Batch', ['data'])
 
 f_params = '/home/ubuntu/lambda_squeezenet_hardcoded/squeezenet_v1.0-0000.params'
 f_symbol = '/home/ubuntu/lambda_squeezenet_hardcoded/squeezenet_v1.0-symbol.json'
+
+#ScaleOutBashCommand1 = "aws cloudwatch set-alarm-state --alarm-name 'testScalingOut10PerTarget' --state-value ALARM --state-reason 'testing purposes'"
+#ScaleOutBashCommand2 = "aws cloudwatch set-alarm-state --alarm-name 'testELBAlerm5PerTarget' --state-value OK --state-reason 'testing purposes'"
+
+#ScaleInBashCommand1 = "aws cloudwatch set-alarm-state --alarm-name 'testELBAlerm5PerTarget' --state-value ALARM --state-reason 'testing purposes'"
+#ScaleInBashCommand2 = "aws cloudwatch set-alarm-state --alarm-name 'testScalingOut10PerTarget' --state-value OK --state-reason 'testing purposes'"
 
 # bucket = 'smallya-test'
 # s3 = boto3.resource('s3')
@@ -72,40 +81,43 @@ def predict(url, mod, synsets):
     # img_file.flush()
     #
     # img = Image.open(img_file.name)
-    out = ""
-    with Image.open("/home/ubuntu/lambda_squeezenet_hardcoded/dogs_small.jpg") as img:
-    
-        # PIL conversion
-        #size = 224, 224
-        #img = img.resize((224, 224), Image.ANTIALIAS)
 
-        # center crop and resize
-        # ** width, height must be greater than new_width, new_height
-        new_width, new_height = 224, 224
-        width, height = img.size   # Get dimensions
-        left = (width - new_width)/2
-        top = (height - new_height)/2
-        right = (width + new_width)/2
-        bottom = (height + new_height)/2
+    img = Image.open("/home/ubuntu/lambda_squeezenet_hardcoded/dogs_small.jpg")
 
-        img = img.crop((left, top, right, bottom))
-        # convert to numpy.ndarray
-        sample = np.asarray(img)
-        # swap axes to make image from (224, 224, 3) to (3, 224, 224)
-        sample = np.swapaxes(sample, 0, 2)
-        img = np.swapaxes(sample, 1, 2)
-        img = img[np.newaxis, :]
+    # PIL conversion
+    #size = 224, 224
+    #img = img.resize((224, 224), Image.ANTIALIAS)
 
-        # forward pass through the network
-        mod.forward(Batch([mx.nd.array(img)]))
-        prob = mod.get_outputs()[0].asnumpy()
-        prob = np.squeeze(prob)
-        a = np.argsort(prob)[::-1]
-        #out = ''
-        for i in a[0:5]:
-            out += 'probability=%f, class=%s , ' %(prob[i], synsets[i])
-        out += "\n"
+    # center crop and resize
+    # ** width, height must be greater than new_width, new_height
+    new_width, new_height = 224, 224
+    width, height = img.size   # Get dimensions
+    left = (width - new_width)/2
+    top = (height - new_height)/2
+    right = (width + new_width)/2
+    bottom = (height + new_height)/2
+
+    img_ = img.crop((left, top, right, bottom))
+    img.close()
+    # convert to numpy.ndarray
+    sample = np.asarray(img_)
+    # swap axes to make image from (224, 224, 3) to (3, 224, 224)
+    sample = np.swapaxes(sample, 0, 2)
+    img_ = np.swapaxes(sample, 1, 2)
+    img_ = img_[np.newaxis, :]
+
+    # forward pass through the network
+    mod.forward(Batch([mx.nd.array(img_)]))
+    mx.nd.waitall()
+    prob = mod.get_outputs()[0].asnumpy()
+    prob = np.squeeze(prob)
+    a = np.argsort(prob)[::-1]
+    out = ''
+    for i in a[0:5]:
+        out += 'probability=%f, class=%s , ' %(prob[i], synsets[i])
+    out += "\n"
     return out
+
 
 with open('/home/ubuntu/lambda_squeezenet_hardcoded/synset.txt', 'r') as f:
     synsets = [l.rstrip() for l in f]
@@ -116,7 +128,7 @@ mod.bind(for_training=False, data_shapes=[('data', (1,3,224,224))])
 mod.set_params(arg_params, aux_params, allow_missing=True)
 
 def lambda_handler():
-    global mod, synsets
+    global mod, synsets 
     url = ''
     # try:
     #     # API Gateway GET method
@@ -147,19 +159,20 @@ def lambda_handler():
                 "content-type": "application/json",
                 "Access-Control-Allow-Origin": "*"
                 },
-            "body": "labels",
+            "body": labels,
             "predicttime": str(delta.total_seconds()),
             "loadmodeldelta": str(loadmodeldelta.total_seconds()),
             "model": "squeezenet_v1.0",
             "statusCode": 200
           }
+    # del sym, arg_params, aux_params, mod, labels
     return out
 
-count = 0
+#count = 0
 @app.route('/HealthCheck')
 def health_check():
     #global count
-    #if count >= 10:
+    #if count >= 12:
     #    return 'Not OK', 404
     #else:
     return 'OK'
@@ -172,16 +185,40 @@ def home_endpoint():
 
 @app.route('/predict', methods=['POST'])
 def get_prediction():
-    global count
-    if count >=15:
-        return 'Not OK', 404
-    count = count + 1
-    print(count)
-    ret = lambda_handler()
-    count = count - 1
+    #global count
+    #if count >= 15:
+    #    return 'Not OK', 404
+    #if count >= 12:
+    #    process = subprocess.Popen(ScaleOutBashCommand1, stdout=subprocess.PIPE, shell=True)
+    #    output, error = process.communicate()
+    #    process = subprocess.Popen(ScaleOutBashCommand2, stdout=subprocess.PIPE, shell=True)
+    #    output, error = process.communicate()
+    #if count <=8:
+    #    process = subprocess.Popen(ScaleInBashCommand1, stdout=subprocess.PIPE, shell=True)
+    #    output, error = process.communicate()
+    #    process = subprocess.Popen(ScaleInBashCommand2, stdout=subprocess.PIPE, shell=True)
+    #    output, error = process.communicate()
+    #count = count + 1
+    #print(count)
+    try:
+        ret = lambda_handler()
+    except:
+        ret = {
+            "headers": {
+                "content-type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+                },
+            "body": "There was an error",
+            #"predicttime": str(delta.total_seconds()),
+            #"loadmodeldelta": str(loadmodeldelta.total_seconds()),
+            #"model": "squeezenet_v1.0",
+            "statusCode": 200
+          }
+    #time.sleep(10)
+    #count = count - 1
     return ret
 
 
 if __name__ == '__main__':
     # load_model()  # load model at the beginning once only
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=80, threaded=True, debug=False)
