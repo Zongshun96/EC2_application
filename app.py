@@ -3,6 +3,7 @@
 # import pickle
 import numpy as np
 from flask import Flask, request
+import time
 # import os
 #import boto3
 # import json
@@ -195,6 +196,24 @@ def OneSecMultiplication():
            }
     return out
 
+import json
+import math
+
+def lambda_handler():
+    t1 = time.time()
+    res = 0 
+    for x in range(300000,-1, -1):
+        a = math.atan(x) * math.atan(x+1)*math.atan(x+2) 
+        res = res + a
+    t2 = time.time()
+    delta = t2 - t1
+    return {
+        'statusCode': 200,
+        "predicttime": str(delta),
+        "receivedTime": t1,
+        "sentTime": t2
+        }
+
 #count = 0
 @app.route('/HealthCheck')
 def health_check():
@@ -212,6 +231,7 @@ def home_endpoint():
 
 @app.route('/predict', methods=['POST'])
 def get_prediction():
+    #print(time.time())
     #global count
     #if count >= 15:
     #    return 'Not OK', 404
@@ -244,7 +264,8 @@ def get_prediction():
     #time.sleep(10)
     #count = count - 1
     # return ret
-    ret = OneSecMultiplication()
+    #ret = OneSecMultiplication()
+    ret = lambda_handler()
     return ret
 
 if __name__ == '__main__':
