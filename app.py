@@ -202,7 +202,11 @@ import math
 def lambda_handler():
     t1 = time.time()
     res = 0 
+<<<<<<< HEAD
     for x in range(300000,-1, -1):
+=======
+    for x in range(700000,-1, -1):
+>>>>>>> 3f188283ea5bfe78951d535d7176753883b7be0c
         a = math.atan(x) * math.atan(x+1)*math.atan(x+2) 
         res = res + a
     t2 = time.time()
@@ -210,9 +214,14 @@ def lambda_handler():
     return {
         'statusCode': 200,
         "predicttime": str(delta),
+<<<<<<< HEAD
         "receivedTime": t1,
         "sentTime": t2
         }
+=======
+    }
+
+>>>>>>> 3f188283ea5bfe78951d535d7176753883b7be0c
 
 #count = 0
 @app.route('/HealthCheck')
