@@ -25,17 +25,13 @@ class Handler(BaseHTTPRequestHandler):
         
         #time.sleep(5) 
         #imgList = []
-        for j in range(0,20):
-            if random.randint(1,12)<2:
-                img = Image.open("/home/ubuntu/EC2_application/simple_python_MT_server/check.jpg")
-                for i in range(0, 40):
-                    #img = Image.open("check10.jpg")
-                    #imgList.append(img.getdata())
-                    img.rotate(30)
-                img.close()
-                del img
-            else:
-                time.sleep(0.05)
+        img = Image.open("/home/ubuntu/EC2_application/simple_python_MT_server/check.jpg")
+        for i in range(0, 1000):
+            #img = Image.open("check10.jpg")
+            #imgList.append(img.getdata())
+            img.rotate(30)
+        img.close()
+        del img
         #newImage = Image.blend(image1, image2, 0.5)
 
         t2 = time.time()
