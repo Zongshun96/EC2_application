@@ -9,7 +9,7 @@ import math
 import random
 
 from PIL import Image
-from wand.image import Image as WImage
+#from wand.image import Image as WImage
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -24,12 +24,16 @@ class Handler(BaseHTTPRequestHandler):
         t1 = time.time()
         
         #time.sleep(5) 
-        imgList = []
-        for i in range(0, 5):
-            img = Image.open("check.jpg")
-            imgList.append(img.getdata())
-            img.close()
-        time.sleep(0.7)
+        #imgList = []
+        img = Image.open("check.jpg")
+        for i in range(0, 80):
+            #img = Image.open("check10.jpg")
+            #imgList.append(img.getdata())
+            img.rotate(30)
+            #img.close()
+        img.close()
+        del img
+        #time.sleep(0.7)
         #newImage = Image.blend(image1, image2, 0.5)
 
         t2 = time.time()
