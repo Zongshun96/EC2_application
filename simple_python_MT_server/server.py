@@ -25,7 +25,7 @@ class Handler(BaseHTTPRequestHandler):
         
         #time.sleep(5) 
         #imgList = []
-        img = Image.open("/home/ubuntu/EC2_application/simple_python_MT_server/check.jpg")
+        img = Image.open("/home/ec2-user/EC2_application/simple_python_MT_server/check.jpg")
         for i in range(0, 850):
             #img = Image.open("check10.jpg")
             #imgList.append(img.getdata())
